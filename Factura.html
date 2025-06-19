@@ -79,7 +79,7 @@
             const sharePointSiteUrl = "https://acquick.sharepoint.com";
             const sharePointListName = "Detalle de cotizacion";
             
-            const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=Numero eq '${numeroFactura}'&$select=Prod,Cantidad,Precio_x0020_unitario,Total_x0020_por_x0020_producto`;
+            const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=Numero eq '${numeroFactura}'&$select=Prod,Cantidad,Precio unitario,Total por producto`;
 
             fetch(queryUrl, {
                 headers: {
@@ -99,8 +99,8 @@
                         const fila = tablaProductosBody.insertRow();
                         fila.insertCell(0).textContent = item.Prod || '';
                         fila.insertCell(1).textContent = item.Cantidad || '';
-                        fila.insertCell(2).textContent = (item.Precio_x0020_unitario || 0).toFixed(2);
-                        fila.insertCell(3).textContent = (item.Total_x0020_por_x0020_producto || 0).toFixed(2);
+                        fila.insertCell(2).textContent = (item.Preciounitario || 0).toFixed(2);
+                        fila.insertCell(3).textContent = (item.Totalporproducto || 0).toFixed(2);
                     });
                 } else {
                     const fila = tablaProductosBody.insertRow();
