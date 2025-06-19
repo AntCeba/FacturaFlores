@@ -79,7 +79,7 @@
             const sharePointSiteUrl = "https://acquick.sharepoint.com";
             const sharePointListName = "Detalle de cotizacion";
             
-            const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=CUT eq '${numeroFactura}'&$select=Prod,Cantidad,Precio_x0020_unitario,Total_x0020_por_x0020_producto`;
+            const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=Numero eq '${numeroFactura}'&$select=Prod,Cantidad,Precio_x0020_unitario,Total_x0020_por_x0020_producto`;
 
             fetch(queryUrl, {
                 headers: {
