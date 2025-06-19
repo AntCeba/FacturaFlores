@@ -2,11 +2,41 @@
 <html>
 <head>
     <title>Detalles de la Factura</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2cm; /* Márgenes similares a Word */
+            line-height: 1.6;
+        }
+        #encabezado-factura {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #info-factura {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border: 1px solid #000;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #000080;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     <div id="encabezado-factura">
-        <img src="flores-verano-jardin.png" alt="Logo de la Empresa" style="width:150px;">
-        <h1>Flores</h1>
+        <img src="ruta/a/tu/logo.png" alt="Logo de la Empresa" style="width:150px;">
+        <h1>Nombre de la Empresa</h1>
     </div>
 
     <div id="info-factura">
@@ -29,6 +59,31 @@
 
     <script>
         // Aquí irá el código JavaScript para obtener y mostrar los datos
+        // Por ejemplo, para llenar la tabla con datos de prueba:
+        document.addEventListener('DOMContentLoaded', function() {
+            // Suponiendo que los datos de la factura se pasan por la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const numeroFactura = urlParams.get('factura') || '001'; // Ejemplo de obtención de número de factura
+            const nombreCliente = urlParams.get('cliente') || 'Cliente Ejemplo';
+
+            document.getElementById('numero-factura').textContent = numeroFactura;
+            document.getElementById('nombre-cliente').textContent = nombreCliente;
+
+            const productos = [
+                { producto: 'Artículo A', cantidad: 2, precio: 10.50, total: 21.00 },
+                { producto: 'Artículo B', cantidad: 1, precio: 25.00, total: 25.00 },
+                { producto: 'Artículo C', cantidad: 3, precio: 5.00, total: 15.00 }
+            ];
+
+            const tablaProductosBody = document.getElementById('tabla-productos').getElementsByTagName('tbody')[0];
+            productos.forEach(item => {
+                const fila = tablaProductosBody.insertRow();
+                fila.insertCell(0).textContent = item.producto;
+                fila.insertCell(1).textContent = item.cantidad;
+                fila.insertCell(2).textContent = item.precio.toFixed(2);
+                fila.insertCell(3).textContent = item.total.toFixed(2);
+            });
+        });
     </script>
 </body>
 </html>
