@@ -38,7 +38,7 @@
 </head>
 <body>
     <div id="encabezado-factura">
-        <img src="Mis archivos/ACQ/flores-verano-jardin.jpg" alt="Logo de la Empresa" style="width:150px;">
+        <img src="ruta/a/tu/logo.png" alt="Logo de la Empresa" style="width:150px;">
         <h1>Nombre de la Empresa</h1>
     </div>
 
@@ -51,9 +51,8 @@
         <thead>
             <tr>
                 <th>Producto</th>
-                <th>Artículo</th>
                 <th>Cantidad</th>
-                <th>Precio</th>
+                <th>Precio Unitario</th>
                 <th>Total por Producto</th>
             </tr>
         </thead>
@@ -65,7 +64,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
             const numeroFactura = urlParams.get('factura');
-            
+            const nombreCliente = urlParams.get('nombreCliente');
+
             if (!numeroFactura) {
                 console.error('Número de factura no encontrado en la URL.');
                 document.getElementById('numero-factura').textContent = 'N/A';
@@ -74,12 +74,12 @@
             }
 
             document.getElementById('numero-factura').textContent = numeroFactura;
-            // document.getElementById('nombre-cliente').textContent = urlParams.get('cliente') || 'Cliente Desconocido';
+            document.getElementById('nombre-cliente').textContent = nombreCliente || 'Cliente Desconocido';
 
             const sharePointSiteUrl = "https://acquick.sharepoint.com";
             const sharePointListName = "Detalle de cotizacion";
             
-            const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=Cut eq '${numeroFactura}'&$select=Producto,Articulo,Cantidad,Precio_x0020_unitario,Total_x0020_por_x0020_producto`;
+            const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=CUT eq '${numeroFactura}'&$select=Prod,Cantidad,Precio_x0020_unitario,Total_x0020_por_x0020_producto`;
 
             fetch(queryUrl, {
                 headers: {
@@ -97,16 +97,15 @@
                 if (data.value && data.value.length > 0) {
                     data.value.forEach(item => {
                         const fila = tablaProductosBody.insertRow();
-                        fila.insertCell(0).textContent = item.Producto || '';
-                        fila.insertCell(1).textContent = item.Articulo || '';
-                        fila.insertCell(2).textContent = item.Cantidad || '';
-                        fila.insertCell(3).textContent = (item.Precio_x0020_unitario || 0).toFixed(2);
-                        fila.insertCell(4).textContent = (item.Total_x0020_por_x0020_producto || 0).toFixed(2);
+                        fila.insertCell(0).textContent = item.Prod || '';
+                        fila.insertCell(1).textContent = item.Cantidad || '';
+                        fila.insertCell(2).textContent = (item.Precio_x0020_unitario || 0).toFixed(2);
+                        fila.insertCell(3).textContent = (item.Total_x0020_por_x0020_producto || 0).toFixed(2);
                     });
                 } else {
                     const fila = tablaProductosBody.insertRow();
                     const celda = fila.insertCell(0);
-                    celda.colSpan = 5;
+                    celda.colSpan = 4;
                     celda.textContent = 'No se encontraron productos para esta factura.';
                     celda.style.textAlign = 'center';
                 }
@@ -116,7 +115,7 @@
                 const tablaProductosBody = document.getElementById('tabla-productos').getElementsByTagName('tbody')[0];
                 const fila = tablaProductosBody.insertRow();
                 const celda = fila.insertCell(0);
-                celda.colSpan = 5;
+                celda.colSpan = 4;
                 celda.textContent = 'Error al cargar los datos. Por favor, inténtelo de nuevo más tarde.';
                 celda.style.color = 'red';
                 celda.style.textAlign = 'center';
