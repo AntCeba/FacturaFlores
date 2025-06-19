@@ -38,7 +38,7 @@
 </head>
 <body>
     <div id="encabezado-factura">
-        <img src="ruta/a/tu/logo.png" alt="Logo de la Empresa" style="width:150px;">
+        <img src="Mis archivos/ACQ/flores-verano-jardin.jpg" alt="Logo de la Empresa" style="width:150px;">
         <h1>Nombre de la Empresa</h1>
     </div>
 
@@ -79,7 +79,7 @@
             const sharePointSiteUrl = "https://acquick.sharepoint.com";
             const sharePointListName = "Detalle de cotizacion";
             
-            const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=Title eq '{numeroFactura}'&$select=Product_x002e_,Cantidad,Precio,Total_x0020_por_x0020_producto`;
+            const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=Title eq {numeroFactura}&$select=Product_x002e_,Cantidad,Precio,Total_x0020_por_x0020_producto`;
 
             fetch(queryUrl, {
                 headers: {
