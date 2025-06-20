@@ -50,10 +50,10 @@
     <table id="tabla-productos">
         <thead>
             <tr>
-                <th>Producto</th>
+                <th>r_x0020_producto</th>
                 <th>Cantidad</th>
-                <th>Precio Unitario</th>
-                <th>Total por Producto</th>
+                <th>Precio</th>
+                <th>Total_x0020_por_x0020_producto</th>
             </tr>
         </thead>
         <tbody>
@@ -79,7 +79,7 @@
             const sharePointSiteUrl = "https://acquick.sharepoint.com";
             const sharePointListName = "Detalle de cotizacion";
             
-            const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=Title eq '${numeroFactura}'&$select=item.Product_x002e_,item.Cantidad,(item.Precio || 0).toFixed(2),(item.Total_x0020_por_x0020_producto || 0).toFixed(2)`;
+            const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=Title eq '${numeroFactura}'&$select=Product_x002e_,Cantidad,Precio,Total_x0020_por_x0020_producto`;
 
             fetch(queryUrl, {
                 headers: {
