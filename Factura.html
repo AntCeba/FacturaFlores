@@ -38,7 +38,7 @@
 </head>
 <body>
     <div id="encabezado-factura">
-        <img src="Mis archivos/ACQ/flores-verano-jardin.jpg" alt="Logo de la Empresa" style="width:150px;">
+        <img src="ruta/a/tu/logo.png" alt="Logo de la Empresa" style="width:150px;">
         <h1>Nombre de la Empresa</h1>
     </div>
 
@@ -79,7 +79,7 @@
             const sharePointSiteUrl = "https://acquick.sharepoint.com";
             const sharePointListName = "Detalle de cotizacion";
             
-            const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=Numero eq ${numeroFactura}&$select=Descripcion,Cantidad,Precio,Total_x0020_por_x0020_producto`;
+            const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=Numero eq '${numeroFactura}'&$select=Descripcion,Cantidad,Precio,Total_x0020_por_x0020_producto`;
 
             fetch(queryUrl, {
                 headers: {
@@ -97,10 +97,10 @@
                 if (data.value && data.value.length > 0) {
                     data.value.forEach(item => {
                         const fila = tablaProductosBody.insertRow();
-                        fila.insertCell(0).textContent = item.Descripcion|| '';
-                        fila.insertCell(1).textContent = item.Cantidad|| '';
-                        fila.insertCell(2).textContent = (item.Precio|| 0).toFixed(2);
-                        fila.insertCell(3).textContent = (item.Total_x0020_por_x0020_producto|| 0).toFixed(2);
+                        fila.insertCell(0).textContent = item.Product_x002e_ || '';
+                        fila.insertCell(1).textContent = item.Cantidad || '';
+                        fila.insertCell(2).textContent = (item.Precio || 0).toFixed(2);
+                        fila.insertCell(3).textContent = (item.Total_x0020_por_x0020_producto || 0).toFixed(2);
                     });
                 } else {
                     const fila = tablaProductosBody.insertRow();
