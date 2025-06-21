@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Detalles de la Factura</title>
+    <style>
+        @page {
+            size: 8.5in 11in;
+            margin: 1in;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        #encabezado-factura {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #encabezado-factura img {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        #encabezado-factura h1 {
+            color: #333;
+            margin: 0;
+            font-size: 24px;
+        }
+        #info-factura {
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+        #info-factura p {
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border: 1px solid #ddd; /* Lighter border for a cleaner look */
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px; /* Slightly more padding */
+            text-align: left;
+        }
+        th {
+            background-color: #000080; /* Dark blue */
+            color: white;
+            font-weight: bold;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9; /* Zebra striping for readability */
+        }
+        .message-container {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .loading-message {
+            background-color: #e0f7fa; /* Light blue background */
+            color: #00796b; /* Dark teal text */
+            border: 1px solid #b2ebf2;
+        }
+        .error-message {
+            background-color: #ffebee; /* Light red background */
+            color: #d32f2f; /* Dark red text */
+            border: 1px solid #ef9a9a;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="encabezado-factura">
+        <img src="https://acquick.sharepoint.com/SiteAssets/flores-verano-jardin.jpg" alt="Logo de la Empresa">
+        <h1>Nombre de la Empresa</h1>
+    </div>
+
+    <div id="info-factura">
+        <p><strong>Número de Factura:</strong> <span id="numero-factura"></span></p>
+        <p><strong>Nombre del Cliente:</strong> <span id="nombre-cliente"></span></p>
+    </div>
+
+    <table id="tabla-productos">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Total por Producto</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+
+    <div id="status-container" class="message-container" style="display: none;">
+        <p id="message-text"></p>
+    </div>
+
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const numeroFactura = urlParams.get('factura');
+            const nombreCliente = urlParams.get('nombreCliente');
+
+            const statusContainer = document.getElementById('status-container');
+            const messageText = document.getElementById('message-text');
+            const tablaProductosBody = document.getElementById('tabla-productos').getElementsByTagName('tbody')[0];
+
+            function showStatus(message, isError = false) {
+                statusContainer.style.display = 'block';
+                messageText.textContent = message;
+                statusContainer.className = isError ? 'message-container error-message' : 'message-container loading-message';
+            }
+
+            function hideStatus() {
+                statusContainer.style.display = 'none';
+            }
+
+ 
+            if (!numeroFactura) {
+                console.error('Número de factura no encontrado en la URL.');
+                document.getElementById('numero-factura').textContent = 'N/A';
+                document.getElementById('nombre-cliente').textContent = 'N/A';
+                showStatus('Error: Número de factura no proporcionado en la URL.', true);
+                return;
+            }
+
+            document.getElementById('numero-factura').textContent = numeroFactura;
+            document.getElementById('nombre-cliente').textContent = nombreCliente || 'Cliente Desconocido';
+
+    
+            const excelFileUrl = "https://acquick-my.sharepoint.com/:x:/g/personal/aceballo_acquick_onmicrosoft_com/EdMO76_-1ApGrZvAyHJp4tYB4yYUkj9uUONo2DBRKj93fg?e=kAGwhV"; 
+
+            showStatus('Cargando datos del Excel...');
+
+            try {
+                const response = await fetch(excelFileUrl);
+
+                if (!response.ok) {
+                    throw new Error(`Error HTTP ${response.status} al cargar el archivo Excel. Asegúrese de que la URL es correcta y el archivo es accesible.`);
+                }
+
+                const data = await response.arrayBuffer(); // Get file content as ArrayBuffer
+                const workbook = XLSX.read(data, { type: 'array' }); // Read the workbook
+                
+
+                const firstSheetName = workbook.SheetNames[0]; 
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+
+                const jsonData = XLSX.utils.sheet_to_json(worksheet); 
+
+                hideStatus(); 
+
+       const filteredData = jsonData.filter(item => {
+                 
+                    return String(item.Title).trim() === String(numeroFactura).trim();
+                });
+
+                if (filteredData && filteredData.length > 0) {
+                    filteredData.forEach(item => {
+                        const fila = tablaProductosBody.insertRow();
+                        fila.insertCell(0).textContent = item['Producto'] || ''; 
+                        fila.insertCell(1).textContent = item['Cantidad'] || '';
+                        fila.insertCell(2).textContent = (parseFloat(item['Precio Unitario']) || 0).toFixed(2);
+                        fila.insertCell(3).textContent = (parseFloat(item['Total por Producto']) || 0).toFixed(2);
+                    });
+                } else {
+                    const fila = tablaProductosBody.insertRow();
+                    const celda = fila.insertCell(0);
+                    celda.colSpan = 4;
+                    celda.textContent = 'No se encontraron productos para esta factura en el Excel.';
+                    celda.style.textAlign = 'center';
+                }
+
+            } catch (error) {
+                console.error('Error al obtener datos del archivo Excel:', error);
+                hideStatus(); // Hide loading message
+                const fila = tablaProductosBody.insertRow();
+                const celda = fila.insertCell(0);
+                celda.colSpan = 4;
+                celda.textContent = 'Error al cargar los datos. Por favor, revise la consola para más detalles.';
+                celda.style.color = 'red';
+                celda.style.textAlign = 'center';
+                showStatus(`Error crítico: ${error.message}`, true); // Display error to user
+            }
+        });
+    </script>
+</body>
+</html>
