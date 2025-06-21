@@ -10,71 +10,35 @@
         body {
             font-family: Arial, sans-serif;
             line-height: 1.6;
-            margin: 0;
-            padding: 0;
         }
         #encabezado-factura {
             text-align: center;
             margin-bottom: 20px;
         }
-        #encabezado-factura img {
-            max-width: 150px;
-            height: auto;
-            margin-bottom: 10px;
-        }
-        #encabezado-factura h1 {
-            color: #333;
-            margin: 0;
-            font-size: 24px;
-        }
         #info-factura {
             margin-bottom: 20px;
-            padding: 0 10px;
-        }
-        #info-factura p {
-            margin: 5px 0;
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
-            border: 1px solid #ddd; /* Lighter border for a cleaner look */
+            border: 1px solid #000;
         }
         th, td {
-            border: 1px solid #ddd;
-            padding: 10px; /* Slightly more padding */
+            border: 1px solid #000;
+            padding: 8px;
             text-align: left;
         }
         th {
-            background-color: #000080; /* Dark blue */
+            background-color: #000080;
             color: white;
-            font-weight: bold;
-        }
-        tbody tr:nth-child(even) {
-            background-color: #f9f9f9; /* Zebra striping for readability */
-        }
-        .message-container {
-            text-align: center;
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .loading-message {
-            background-color: #e0f7fa; /* Light blue background */
-            color: #00796b; /* Dark teal text */
-            border: 1px solid #b2ebf2;
-        }
-        .error-message {
-            background-color: #ffebee; /* Light red background */
-            color: #d32f2f; /* Dark red text */
-            border: 1px solid #ef9a9a;
             font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div id="encabezado-factura">
-        <img src="https://acquick.sharepoint.com/SiteAssets/flores-verano-jardin.jpg" alt="Logo de la Empresa">
+        <img src="C:\Mis archivos/ACQ/flores-verano-jardin.jpg" alt="Logo de la Empresa" style="width:150px;">
         <h1>Nombre de la Empresa</h1>
     </div>
 
@@ -96,100 +60,66 @@
             </tbody>
     </table>
 
-    <div id="status-container" class="message-container" style="display: none;">
-        <p id="message-text"></p>
-    </div>
-
-    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-
     <script>
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
             const numeroFactura = urlParams.get('factura');
             const nombreCliente = urlParams.get('nombreCliente');
 
-            const statusContainer = document.getElementById('status-container');
-            const messageText = document.getElementById('message-text');
-            const tablaProductosBody = document.getElementById('tabla-productos').getElementsByTagName('tbody')[0];
-
-            function showStatus(message, isError = false) {
-                statusContainer.style.display = 'block';
-                messageText.textContent = message;
-                statusContainer.className = isError ? 'message-container error-message' : 'message-container loading-message';
-            }
-
-            function hideStatus() {
-                statusContainer.style.display = 'none';
-            }
-
- 
             if (!numeroFactura) {
                 console.error('Número de factura no encontrado en la URL.');
                 document.getElementById('numero-factura').textContent = 'N/A';
                 document.getElementById('nombre-cliente').textContent = 'N/A';
-                showStatus('Error: Número de factura no proporcionado en la URL.', true);
                 return;
             }
 
             document.getElementById('numero-factura').textContent = numeroFactura;
             document.getElementById('nombre-cliente').textContent = nombreCliente || 'Cliente Desconocido';
 
-    
-            const excelFileUrl = "https://acquick.sharepoint.com/:x:/g/ESlAdu3jRhBHm5ie7crl1mkBAKwMr9dp9GeCn6yBP1f6LQ?e=2ASYgM"; 
+            const sharePointSiteUrl = "https://acquick.sharepoint.com";
+            const sharePointListName = "Detalle de cotizacion";
+            
+            const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=cotizacion eq '${numeroFactura}'&$select=item.Product_x002e_,item.Cantidad,(item.Precio || 0).toFixed(2),(item.Total_x0020_por_x0020_producto || 0).toFixed(2)`;
 
-            showStatus('Cargando datos del Excel...');
-
-            try {
-                const response = await fetch(excelFileUrl);
-
-                if (!response.ok) {
-                    throw new Error(`Error HTTP ${response.status} al cargar el archivo Excel. Asegúrese de que la URL es correcta y el archivo es accesible.`);
+            fetch(queryUrl, {
+                headers: {
+                    'Accept': 'application/json;odata=nometadata',
                 }
-
-                const data = await response.arrayBuffer(); 
-                const workbook = XLSX.read(data, { type: 'array' }); 
-                
-
-                const firstSheetName = workbook.SheetNames[0]; 
-                const worksheet = workbook.Sheets[firstSheetName];
-                
-
-                const jsonData = XLSX.utils.sheet_to_json(worksheet); 
-
-                hideStatus(); 
-
-       const filteredData = jsonData.filter(item => {
-                 
-                    return String(item.Title).trim() === String(numeroFactura).trim();
-                });
-
-                if (filteredData && filteredData.length > 0) {
-                    filteredData.forEach(item => {
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const tablaProductosBody = document.getElementById('tabla-productos').getElementsByTagName('tbody')[0];
+                if (data.value && data.value.length > 0) {
+                    data.value.forEach(item => {
                         const fila = tablaProductosBody.insertRow();
-                        fila.insertCell(0).textContent = item['Producto'] || ''; 
-                        fila.insertCell(1).textContent = item['Cantidad'] || '';
-                        fila.insertCell(2).textContent = (parseFloat(item['Precio Unitario']) || 0).toFixed(2);
-                        fila.insertCell(3).textContent = (parseFloat(item['Total por Producto']) || 0).toFixed(2);
+                        fila.insertCell(0).textContent = item.Product_x002e_ || '';
+                        fila.insertCell(1).textContent = item.Cantidad || '';
+                        fila.insertCell(2).textContent = (item.Precio || 0).toFixed(2);
+                        fila.insertCell(3).textContent = (item.Total_x0020_por_x0020_producto || 0).toFixed(2);
                     });
                 } else {
                     const fila = tablaProductosBody.insertRow();
                     const celda = fila.insertCell(0);
                     celda.colSpan = 4;
-                    celda.textContent = 'No se encontraron productos para esta factura en el Excel.';
+                    celda.textContent = 'No se encontraron productos para esta factura.';
                     celda.style.textAlign = 'center';
                 }
-
-            } catch (error) {
-                console.error('Error al obtener datos del archivo Excel:', error);
-                hideStatus(); // Hide loading message
+            })
+            .catch(error => {
+                console.error('Error al obtener datos de SharePoint:', error);
+                const tablaProductosBody = document.getElementById('tabla-productos').getElementsByTagName('tbody')[0];
                 const fila = tablaProductosBody.insertRow();
                 const celda = fila.insertCell(0);
                 celda.colSpan = 4;
-                celda.textContent = 'Error al cargar los datos. Por favor, revise la consola para más detalles.';
+                celda.textContent = 'Error al cargar los datos. Por favor, inténtelo de nuevo más tarde.';
                 celda.style.color = 'red';
                 celda.style.textAlign = 'center';
-                showStatus(`Error crítico: ${error.message}`, true); // Display error to user
-            }
+            });
         });
     </script>
 </body>
