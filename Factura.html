@@ -1,44 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Detalles de la Factura</title>
+    <title>Detalles de la Cotización</title>
     <style>
-        @page {
-            size: 8.5in 11in;
-            margin: 1in;
+        @page { size: 8.5in 11in; margin: 1in; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; }
+        #encabezado-factura { text-align: center; margin-bottom: 20px; }
+        #encabezado-factura img { max-width: 150px; height: auto; margin-bottom: 10px; }
+        #encabezado-factura h1 { color: #333; margin: 0; font-size: 24px; }
+        #info-factura { margin-bottom: 20px; padding: 0 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; border: 1px solid #ddd; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #000080; color: white; font-weight: bold; }
+        tbody tr:nth-child(even) { background-color: #f9f9f9; }
+        .message-container {
+            text-align: center; margin-top: 20px; padding: 10px; border-radius: 5px;
         }
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
+        .loading-message {
+            background-color: #e0f7fa; color: #00796b; border: 1px solid #b2ebf2;
         }
-        #encabezado-factura {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        #info-factura {
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            border: 1px solid #000;
-        }
-        th, td {
-            border: 1px solid #000;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #000080;
-            color: white;
-            font-weight: bold;
+        .error-message {
+            background-color: #ffebee; color: #d32f2f; border: 1px solid #ef9a9a; font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div id="encabezado-factura">
-        <img src="C:\Mis archivos/ACQ/flores-verano-jardin.jpg" alt="Logo de la Empresa" style="width:150px;">
+        <img src="https://acquick.sharepoint.com/SiteAssets/flores-verano-jardin.jpg" alt="Logo de la Empresa">
         <h1>Nombre de la Empresa</h1>
     </div>
 
@@ -56,70 +44,109 @@
                 <th>Total por Producto</th>
             </tr>
         </thead>
-        <tbody>
-            </tbody>
+        <tbody></tbody>
     </table>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const numeroFactura = urlParams.get('factura');
-            const nombreCliente = urlParams.get('nombreCliente');
+    <div id="status-container" class="message-container" style="display: none;">
+        <p id="message-text"></p>
+    </div>
 
-            if (!numeroFactura) {
-                console.error('Número de factura no encontrado en la URL.');
-                document.getElementById('numero-factura').textContent = 'N/A';
-                document.getElementById('nombre-cliente').textContent = 'N/A';
-                return;
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const numeroFacturaFromUrl = urlParams.get('factura');
+            const nombreClienteFromUrl = urlParams.get('nombreCliente');
+
+            const displayNumeroFactura = document.getElementById('numero-factura');
+            const displayNombreCliente = document.getElementById('nombre-cliente');
+            const statusContainer = document.getElementById('status-container');
+            const messageText = document.getElementById('message-text');
+            const tablaProductosBody = document.getElementById('tabla-productos').getElementsByTagName('tbody')[0];
+
+            function showStatus(message, isError = false) {
+                statusContainer.style.display = 'block';
+                messageText.textContent = message;
+                statusContainer.className = isError ? 'message-container error-message' : 'message-container loading-message';
             }
 
-            document.getElementById('numero-factura').textContent = numeroFactura;
-            document.getElementById('nombre-cliente').textContent = nombreCliente || 'Cliente Desconocido';
+            function hideStatus() {
+                statusContainer.style.display = 'none';
+            }
 
-            const sharePointSiteUrl = "https://acquick.sharepoint.com";
-            const sharePointListName = "Detalle de cotizacion";
-            
-            const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=cotizacion eq '${numeroFactura}'&$select=item.Product_x002e_,item.Cantidad,(item.Precio || 0).toFixed(2),(item.Total_x0020_por_x0020_producto || 0).toFixed(2)`;
+            function clearTable() {
+                tablaProductosBody.innerHTML = '';
+            }
 
-            fetch(queryUrl, {
-                headers: {
-                    'Accept': 'application/json;odata=nometadata',
+            async function fetchInvoiceDetails(numeroFactura) {
+                clearTable();
+                hideStatus();
+
+                if (!numeroFactura) {
+                    displayNumeroFactura.textContent = 'N/A';
+                    showStatus('No se proporcionó el número de factura.', true);
+                    return;
                 }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                const tablaProductosBody = document.getElementById('tabla-productos').getElementsByTagName('tbody')[0];
-                if (data.value && data.value.length > 0) {
-                    data.value.forEach(item => {
-                        const fila = tablaProductosBody.insertRow();
-                        fila.insertCell(0).textContent = item.Product_x002e_ || '';
-                        fila.insertCell(1).textContent = item.Cantidad || '';
-                        fila.insertCell(2).textContent = (item.Precio || 0).toFixed(2);
-                        fila.insertCell(3).textContent = (item.Total_x0020_por_x0020_producto || 0).toFixed(2);
+
+                displayNumeroFactura.textContent = numeroFactura;
+
+                const sharePointSiteUrl = "https://acquick.sharepoint.com"; 
+                const sharePointListName = "detalle de Cotizacion"; 
+
+                const queryUrl = `${sharePointSiteUrl}/_api/web/lists/getbytitle('${sharePointListName}')/items?$filter=factura eq '${numeroFactura}'&$select=Producto,Cantidad,PrecioUnitario,TotalProducto`;
+
+                showStatus('Cargando datos de SharePoint...');
+
+                try {
+                    const response = await fetch(queryUrl, {
+                        headers: { 'Accept': 'application/json;odata=nometadata' }
                     });
-                } else {
+
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    hideStatus();
+
+                    if (data.value && data.value.length > 0) {
+                        data.value.forEach(item => {
+                            const fila = tablaProductosBody.insertRow();
+                            fila.insertCell(0).textContent = item.Producto || '';
+                            fila.insertCell(1).textContent = item.Cantidad || '';
+                            fila.insertCell(2).textContent = (parseFloat(item.PrecioUnitario) || 0).toFixed(2);
+                            fila.insertCell(3).textContent = (parseFloat(item.TotalProducto) || 0).toFixed(2);
+                        });
+                    } else {
+                        const fila = tablaProductosBody.insertRow();
+                        const celda = fila.insertCell(0);
+                        celda.colSpan = 4;
+                        celda.textContent = 'No se encontraron productos para esta factura.';
+                        celda.style.textAlign = 'center';
+                        showStatus('No se encontraron datos para la factura proporcionada.', false);
+                    }
+
+                } catch (error) {
+                    console.error('Error al obtener datos de SharePoint:', error);
+                    hideStatus();
                     const fila = tablaProductosBody.insertRow();
                     const celda = fila.insertCell(0);
                     celda.colSpan = 4;
-                    celda.textContent = 'No se encontraron productos para esta factura.';
+                    celda.textContent = 'Error al cargar los datos. Verifica tu conexión o permisos.';
+                    celda.style.color = 'red';
                     celda.style.textAlign = 'center';
+                    showStatus(`Error crítico: ${error.message}`, true);
                 }
-            })
-            .catch(error => {
-                console.error('Error al obtener datos de SharePoint:', error);
-                const tablaProductosBody = document.getElementById('tabla-productos').getElementsByTagName('tbody')[0];
-                const fila = tablaProductosBody.insertRow();
-                const celda = fila.insertCell(0);
-                celda.colSpan = 4;
-                celda.textContent = 'Error al cargar los datos. Por favor, inténtelo de nuevo más tarde.';
-                celda.style.color = 'red';
-                celda.style.textAlign = 'center';
-            });
+            }
+
+            // Ejecutar automáticamente si viene el parámetro factura
+            if (numeroFacturaFromUrl) {
+                displayNombreCliente.textContent = nombreClienteFromUrl || 'Cliente Desconocido';
+                await fetchInvoiceDetails(numeroFacturaFromUrl);
+            } else {
+                displayNumeroFactura.textContent = 'N/A';
+                displayNombreCliente.textContent = nombreClienteFromUrl || 'Cliente Desconocido';
+                showStatus('No se proporcionó el número de factura en la URL.', true);
+            }
         });
     </script>
 </body>
